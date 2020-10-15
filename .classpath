@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.8"/>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="lib" path="core.jar"/>
+	<classpathentry kind="lib" path="gluegen-rt.jar"/>
+	<classpathentry kind="lib" path="jogl-all.jar"/>
+	<classpathentry kind="lib" path="twitter4j-core-4.0.4.jar" sourcepath="twitter4j-core-4.0.4.jar"/>
+	<classpathentry kind="lib" path="/Users/ruferguson/Downloads/jaunt1/jaunt1.6.0.jar"/>
+	<classpathentry kind="lib" path="/Users/ruferguson/eclipse-workspace/TwitterBot/twitter4j-media-support-4.0.4.jar"/>
+	<classpathentry kind="lib" path="/Users/ruferguson/eclipse-workspace/TwitterBot/twitter4j-stream-4.0.4.jar"/>
+	<classpathentry kind="lib" path="/Users/ruferguson/eclipse-workspace/TwitterBot/twitter4j-async-4.0.4.jar"/>
+	<classpathentry kind="lib" path="/Users/ruferguson/eclipse-workspace/TwitterBot/twitter4j-core-4.0.4.jar"/>
+	<classpathentry kind="lib" path="/Users/ruferguson/eclipse-workspace/TwitterBot/twitter4j-examples-4.0.4.jar"/>
+	<classpathentry kind="lib" path="/Users/ruferguson/eclipse-workspace/TwitterBot/core.jar"/>
+	<classpathentry kind="lib" path="/Users/ruferguson/eclipse-workspace/TwitterBot/gluegen-rt.jar"/>
+	<classpathentry kind="lib" path="/Users/ruferguson/eclipse-workspace/TwitterBot/jogl-all.jar"/>
+	<classpathentry kind="lib" path="/Users/ruferguson/Downloads/twitter4j-4/twitter4j-core/twitter4j-core-4.0.7-javadoc.jar"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>
