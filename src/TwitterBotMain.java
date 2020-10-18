@@ -7,6 +7,7 @@
 import processing.core.*;
 
 import java.io.*;
+import java.lang.reflect.Array;
 import java.net.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -15,8 +16,9 @@ import java.util.*;
 
 import com.jaunt.JauntException;
 
-// This class serves as a template for creating twitterbots and demonstrates string tokenizing
-// and web scraping and the use of the Twitter API
+import java.lang.Character;
+
+
 public class TwitterBotMain extends PApplet {
 
 	private ArrayList<String> tokens;
@@ -31,11 +33,14 @@ public class TwitterBotMain extends PApplet {
 	private static final String fWHITESPACE = "\t\r\n ";
 	
 	//example twitter hastag search term
-	private static final String fPASSIVEAGG = "passiveaggressive";
+	private static final String fPASSIVEAGG = "inspirationalquotes";
 	private static final String fCOMMA = ","; 
 	
 	//handles twitter api
 	TwitterInteraction tweet; 
+	
+	int tweetSize = 40;
+	MarkovGenerator<String> markovTweetGenerator;
 
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
@@ -51,48 +56,36 @@ public class TwitterBotMain extends PApplet {
 	public void setup() {
 		tweet = new TwitterInteraction(); 
 		
-// NOTE: everything starts uncommented. Comment out the calls that you would like to try and use.
 		
-		loadNovel("data/The Grand Sophy excerpt.txt"); //TODO: must train from another source
+		
+// NOTE: everything starts uncommented. Comment out the calls that you would like to try and use.
+				
+		loadNovel("data/psalms_excerpt.txt"); //TODO: must train from another source
 //		println("Token size: " + tokens.size());
 
 		//TODO: train an AI algorithm (eg, Markov Chain) and generate text for markov chain status
 		
-		//can train on twitter statuses -- note: in your code I would put this part in a separate function
-		//but anyhow, here is an example of searrching twitter hashtag. You have to pay $$ to the man to get more results. :(
-		//see TwitterInteraction class
+		markovTweetGenerator = new MarkovGenerator();
 		
-		//ArrayList<String> tweetResults = tweet.searchForTweets("John Cage");
-		//for (int i = 0; i < tweetResults.size(); i++) {
-		//	println(tweetResults.get(i)); //just prints out the results for now
-		//}
+		makeTweet();
+		//markovTweetGenerator.train(tokens);
+		//ArrayList<String> generatedTweet = markovTweetGenerator.generate(tweetSize);
 		
+		//System.out.println("trained: " + generatedTweet);
 		
 		//Make sure within Twitter limits (used to be 140 but now is more?)
-		String status = "first tweet?";
-		tweet.updateTwitter(status);
-				
-		//prints the text content of the sites that come up with the google search of dogs
-//		//you may use this content to train your AI too
-//		Scraper scraper = new Scraper(); 
-//		ArrayList<String> results;
-//		try {
-//			results = scraper.scrapeGoogleResults("dogs");
-//			
-//			//print your results
-//			System.out.println(results); 
-//			
-////			scraper.scrape("http://google.com",  "dogs"); //see class documentation
-//
-//		} catch (JauntException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		}
-				
+		//String status = "";
+		//for (int i = 0; i < generatedTweet.size(); i++) {
+		//	status = status + generatedTweet.get(i) + " ";
+		//}
+		
+		//System.out.println(status);
+		//String status = "first tweet?";
+		//tweet.updateTwitter(status);				
 	}
 
 
-	//this loads the novel 'The Grand Sophy' given a path p -- but really will load any file.
+	//this loads the text file given a path p
 	void loadNovel(String p) {
 		String filePath = getPath(p);
 		Path path = Paths.get(filePath);
@@ -134,8 +127,108 @@ public class TwitterBotMain extends PApplet {
 	}
 
 	public void draw() {
-		// ellipse(width / 2, height / 2, second(), second());
+		//ellipse(width / 2, height / 2, second(), second());
 
 	}
+	
+	void makeTweet() {
+		//ArrayList<String> tweetResults = tweet.searchForTweets("Inspirational Quotes");
+		
+	//	for (int i = 0; i < tweetResults.size(); i++) {
+	//		TextTokenizer tokenizer = new TextTokenizer(tweetResults.get(i));
+	//		ArrayList<String> t = tokenizer.parseSearchText();
+	//		tokens.addAll(t);
+	//	}
+		
+		markovTweetGenerator.train(tokens);
+		
+		ArrayList<String> myTweet = markovTweetGenerator.generate((int) random(5, tweetSize));
+		
+		String genString = arrayToString(myTweet);
+		genString = checkChars(genString);			
+		genString = checkLength(genString);
+		
+		String status = "";
+		for (int i = 0; i < genString.length(); i++) {
+			status = status + genString.charAt(i);
+		}
+		
+		System.out.println("status is: " + status);
+	}
+	
+	String arrayToString(ArrayList<String> generated) {
+		String str = "";
+		for (int i = 0; i < generated.size(); i++) {
+			str = str + generated.get(i) + " ";
+		}
+		return str;
+	}
+	
+	String checkChars(String generated) {
+		String str = "";
+		for (int i = 0; i < generated.length(); i++) {
+			int isPunctuation = fPUNCTUATION.indexOf(generated.charAt(i));
+			if (isPunctuation == -1 && !Character.isDigit(generated.charAt(i))) {
+				str = str + generated.charAt(i);
+			}
+		}
+		for (int i = 0; i < 3; i ++) {
+			str = str.replace("  ", " ");
+			str = str.replace("   ", " ");
+			str = str.replace("/t", "");
+			str = str.replace("/r", "");
+			str = str.replace("/n", "");
+		}
+		return str;
+	}
+	
+	String checkLength(String generated) {
+		String trimmed = "";
+		if (generated.length() > TWITTER_CHAR_LIMIT) {
+			for (int i = 0; i < TWITTER_CHAR_LIMIT; i++) {
+				System.out.println("inhere");
+				trimmed = trimmed + generated.charAt(i);
+			}
+			return trimmed;
+		}
+		return generated;
+	}
+	
+	/* NOTE: everything starts uncommented. Comment out the calls that you would like to try and use.
+		
+	loadNovel("data/The Grand Sophy excerpt.txt"); //TODO: must train from another source
+	println("Token size: " + tokens.size());
+
+	TODO: train an AI algorithm (eg, Markov Chain) and generate text for markov chain status
+		
+	// can train on twitter statuses -- note: in your code I would put this part in a separate function
+	// but anyhow, here is an example of searrching twitter hashtag. You have to pay $$ to the man to get more results. :(
+	// see TwitterInteraction class
+		
+	ArrayList<String> tweetResults = tweet.searchForTweets("John Cage");
+	for (int i = 0; i < tweetResults.size(); i++) {
+		println(tweetResults.get(i)); //just prints out the results for now
+	}
+		
+	//Make sure within Twitter limits (used to be 140 but now is more?)
+	
+	String status = "first tweet?";
+	tweet.updateTwitter(status);
+				
+	//prints the text content of the sites that come up with the google search of dogs
+	//you may use this content to train your AI too
+	
+	Scraper scraper = new Scraper(); 
+	ArrayList<String> results;
+	try {
+		results = scraper.scrapeGoogleResults("dogs");
+		// print your results
+		System.out.println(results); 
+		scraper.scrape("http://google.com",  "dogs"); //see class documentation
+	} catch (JauntException e) {
+		// TODO Auto-generated catch block
+		e.printStackTrace();
+	}
+ */
 
 }
