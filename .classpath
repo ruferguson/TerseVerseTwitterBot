@@ -16,5 +16,7 @@
 	<classpathentry kind="lib" path="/Users/ruferguson/eclipse-workspace/TwitterBot/gluegen-rt.jar"/>
 	<classpathentry kind="lib" path="/Users/ruferguson/eclipse-workspace/TwitterBot/jogl-all.jar"/>
 	<classpathentry kind="lib" path="/Users/ruferguson/Downloads/twitter4j-4/twitter4j-core/twitter4j-core-4.0.7-javadoc.jar"/>
+	<classpathentry kind="lib" path="/Users/ruferguson/Desktop/ai/themidibus/library/themidibus.jar"/>
+	<classpathentry kind="lib" path="/Users/ruferguson/Desktop/ai/jMusic1.6.5.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
