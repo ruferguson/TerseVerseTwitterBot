@@ -37,9 +37,10 @@ public class MidiFileToNotes {
 
 		String scoreName = "score_" + filename;
 		Score theScore = new Score(scoreName);
-
+		
 		// read the midi file into a score
-		Read.midi(theScore, filename);
+		Read.midi(theScore, filename); // where the "reading midi file" is printed
+		System.out.println("\n\n\n\n\n\n\n\n\n\n");
 
 		// extract the melody and all its parts
 		Part part = theScore.getPart(whichLine);

@@ -57,7 +57,7 @@ public class MelodyPlayer {
 
 	//list the midi devices -- choosing IAC bus (for mac/OS X) so can send to an external program (eg DAW/sampler)
 	void setupMidi() {
-		MidiBus.list(); // display all ports
+		//MidiBus.list(); // display all ports
 		outputMidiBus = new MidiBus(this, "Bus 1", "Bus 1");
 		//or if on windows - use a windows virtual port
 	}

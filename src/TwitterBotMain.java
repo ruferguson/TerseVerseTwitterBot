@@ -35,6 +35,7 @@ public class TwitterBotMain extends PApplet {
 	private static final String fREALENDPUNCTUATION = ".!?";
 
 	private static final String fWHITESPACE = "\t\r\n ";
+	private static final String fVOWELS = "aeiou";
 	
 	//example twitter hastag search term
 	private static final String fPASSIVEAGG = "inspirationalquotes";
@@ -67,21 +68,7 @@ public class TwitterBotMain extends PApplet {
 		//TODO: train an AI algorithm (eg, Markov Chain) and generate text for markov chain status
 		markovTweetGenerator = new MarkovGenerator();
 		
-		makeTweet();
-		//markovTweetGenerator.train(tokens);
-		//ArrayList<String> generatedTweet = markovTweetGenerator.generate(tweetSize);
-		
-		//System.out.println("trained: " + generatedTweet);
-		
-		//Make sure within Twitter limits (used to be 140 but now is more?)
-		//String status = "";
-		//for (int i = 0; i < generatedTweet.size(); i++) {
-		//	status = status + generatedTweet.get(i) + " ";
-		//}
-		
-		//System.out.println(status);
-		//String status = "first tweet?";
-		//tweet.updateTwitter(status);			
+		makeTweet(); // generate a tweet		
 		
 		player = new MelodyPlayer(this, 100.0f);
 		player.setup();
@@ -115,7 +102,6 @@ public class TwitterBotMain extends PApplet {
 
 	//get the relative file path 
 	String getPath(String path) {
-
 		String filePath = "";
 		try {
 			filePath = URLDecoder.decode(getClass().getResource(path).getPath(), "UTF-8");
@@ -131,17 +117,17 @@ public class TwitterBotMain extends PApplet {
 		//ellipse(width / 2, height / 2, second(), second());
 	    player.play();		//play each note in the sequence -- the player will determine whether is time for a note onset
 	    background(250);
-	    showInstructions();
+	    showInstructions(); 
 	}
 	
 	void makeTweet() {
-		//ArrayList<String> tweetResults = tweet.searchForTweets("Inspirational Quotes");
+		/*ArrayList<String> tweetResults = tweet.searchForTweets("Inspirational Quotes");
 		
-	//	for (int i = 0; i < tweetResults.size(); i++) {
-	//		TextTokenizer tokenizer = new TextTokenizer(tweetResults.get(i));
-	//		ArrayList<String> t = tokenizer.parseSearchText();
-	//		tokens.addAll(t);
-	//	}
+		for (int i = 0; i < tweetResults.size(); i++) {
+			TextTokenizer tokenizer = new TextTokenizer(tweetResults.get(i));
+			ArrayList<String> t = tokenizer.parseSearchText();
+			tokens.addAll(t);
+		}*/
 		
 		markovTweetGenerator.train(tokens);
 		
@@ -150,13 +136,17 @@ public class TwitterBotMain extends PApplet {
 		String genString = arrayToString(myTweet);
 		genString = checkChars(genString);			
 		genString = checkLength(genString);
+		//genString = checkAn(genString);
+		genString = checkCase(genString);
 		
-		String status = "";
+		String status = "Psalms " + (int) random(150, 300) + ":" + (int) random(1, 45) + " ";
 		for (int i = 0; i < genString.length(); i++) {
 			status = status + genString.charAt(i);
 		}
 		
 		System.out.println("status is: " + status);
+		
+		tweet.updateTwitter(status);	
 	}
 	
 	String arrayToString(ArrayList<String> generated) {
@@ -169,27 +159,47 @@ public class TwitterBotMain extends PApplet {
 	
 	String checkChars(String generated) {
 		String str = "";
-		for (int i = 0; i < generated.length(); i++) {
+		for (int i = 0; i < generated.length(); i++) { // check for random punctuation
 			int isPunctuation = fPUNCTUATION.indexOf(generated.charAt(i));
 			if (isPunctuation == -1 && !Character.isDigit(generated.charAt(i))) {
 				str = str + generated.charAt(i);
 			}
 		}
-		for (int i = 0; i < 3; i ++) {
-			str = str.replace("  ", " ");
-			str = str.replace("   ", " ");
-			str = str.replace("/t", "");
-			str = str.replace("/r", "");
-			str = str.replace("/n", "");
+		str = str.replace("\t", "");
+		str = str.replace("\r", "");
+		str = str.replace("\n", "");
+		String after = str.trim().replaceAll(" +", " ");  // check for extra spaces	
+		after = after.toLowerCase(); // make string all lower case
+		return after;
+	}
+	
+	String checkAn(String generated) {
+		
+		for (int i = 0; i < generated.length(); i++) {
+			if (generated.contains(" a ")) {
+				int isA = " a ".indexOf(generated.charAt(i));
+				if (isA != -1) {
+					if (fVOWELS.indexOf(generated.charAt(i + 3)) != -1) {
+						generated = generated.replace(generated.substring(i - 1, i + 1), " an ");
+					}
+				}
+			} else if (generated.contains(" an ")) {
+				int isAn = " an ".indexOf(generated.charAt(i));
+				if (isAn != -1) {
+					if (fVOWELS.indexOf(generated.charAt(i + 4)) != -1) {
+						generated = generated.replace(generated.substring(i - 1, i + 2), " a ");
+					}
+				}
+			}
 		}
-		return str;
+		
+		return generated;
 	}
 	
 	String checkLength(String generated) {
 		String trimmed = "";
 		if (generated.length() > TWITTER_CHAR_LIMIT) {
 			for (int i = 0; i < TWITTER_CHAR_LIMIT; i++) {
-				System.out.println("inhere");
 				trimmed = trimmed + generated.charAt(i);
 			}
 			return trimmed;
@@ -197,42 +207,21 @@ public class TwitterBotMain extends PApplet {
 		return generated;
 	}
 	
-	/* NOTE: everything starts uncommented. Comment out the calls that you would like to try and use.
-		
-	loadNovel("data/The Grand Sophy excerpt.txt"); //TODO: must train from another source
-	println("Token size: " + tokens.size());
+	String checkCase(String generated) {
+		if (generated.contains(" his ")) {
+			generated = generated.replace(" his ", " His ");
+		} else if (generated.contains(" him ")) {
+			generated = generated.replace(" his ", " Him ");
+		} else if (generated.contains(" god ")) {
+			generated = generated.replace(" god ", " God ");
+		} else if (generated.contains(" i ")) {
+			generated = generated.replace(" i ", " I ");
+		}
 
-	TODO: train an AI algorithm (eg, Markov Chain) and generate text for markov chain status
-		
-	// can train on twitter statuses -- note: in your code I would put this part in a separate function
-	// but anyhow, here is an example of searrching twitter hashtag. You have to pay $$ to the man to get more results. :(
-	// see TwitterInteraction class
-		
-	ArrayList<String> tweetResults = tweet.searchForTweets("John Cage");
-	for (int i = 0; i < tweetResults.size(); i++) {
-		println(tweetResults.get(i)); //just prints out the results for now
+		generated = generated.substring(0, 1).toUpperCase() + generated.substring(1);
+		return generated;
 	}
-		
-	//Make sure within Twitter limits (used to be 140 but now is more?)
 	
-	String status = "first tweet?";
-	tweet.updateTwitter(status);
-				
-	//prints the text content of the sites that come up with the google search of dogs
-	//you may use this content to train your AI too
-	
-	Scraper scraper = new Scraper(); 
-	ArrayList<String> results;
-	try {
-		results = scraper.scrapeGoogleResults("dogs");
-		// print your results
-		System.out.println(results); 
-		scraper.scrape("http://google.com",  "dogs"); //see class documentation
-	} catch (JauntException e) {
-		// TODO Auto-generated catch block
-		e.printStackTrace();
-	}
- */
 	
 	// this starts & restarts the melody and runs unit tests
 	public void keyPressed() {
@@ -248,8 +237,6 @@ public class TwitterBotMain extends PApplet {
 			unitTest.P2UnitTest2();
 		} else if (key == 'e') {
 			unitTest.P2UnitTest3();	
-		} else if (key == 's') {		
-			player.hasMelody = false; // stops the player
 		}
 	}
 	
@@ -274,4 +261,35 @@ public class TwitterBotMain extends PApplet {
 		text("Press e for Project 2: Unit Test 3", width/2, height*18/20);
 	}
 	
+	/* NOTE: everything starts uncommented. Comment out the calls that you would like to try and use.
+	
+	loadNovel("data/The Grand Sophy excerpt.txt"); //TODO: must train from another source
+	println("Token size: " + tokens.size());
+
+	TODO: train an AI algorithm (eg, Markov Chain) and generate text for markov chain status
+		
+	// can train on twitter statuses -- note: in your code I would put this part in a separate function
+	// but anyhow, here is an example of searrching twitter hashtag. You have to pay $$ to the man to get more results. :(
+	// see TwitterInteraction class
+		
+	ArrayList<String> tweetResults = tweet.searchForTweets("John Cage");
+	for (int i = 0; i < tweetResults.size(); i++) {
+		println(tweetResults.get(i)); //just prints out the results for now
+	}
+				
+	//prints the text content of the sites that come up with the google search of dogs
+	//you may use this content to train your AI too
+	
+	Scraper scraper = new Scraper(); 
+	ArrayList<String> results;
+	try {
+		results = scraper.scrapeGoogleResults("dogs");
+		// print your results
+		System.out.println(results); 
+		scraper.scrape("http://google.com",  "dogs"); //see class documentation
+	} catch (JauntException e) {
+		// TODO Auto-generated catch block
+		e.printStackTrace();
+	}
+ */
 }
