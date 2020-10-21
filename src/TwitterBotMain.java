@@ -1,8 +1,9 @@
 /* Ru Ferguson
  * 20 October 2020
  * 
- */
-
+ * A Java Twitter bot that uses the an excerpt of the book of Psalms to generate a tweet using a Markov chain of 1.
+ * Pressing "m" will also train the tweet generation on tweets scraped from #MondayMotivation on Twitter.
+ * All unit tests from Project 1 and 2 are also accessible in this project. */
 
 import processing.core.*;
 
@@ -21,7 +22,6 @@ import jm.util.Play;
 import jm.util.Read;
 
 import java.lang.Character;
-
 
 public class TwitterBotMain extends PApplet {
 
@@ -136,10 +136,11 @@ public class TwitterBotMain extends PApplet {
 		
 		myTweet = removeExtras(myTweet);
 		myTweet = removeConsecutiveDups(myTweet);
+		myTweet = checkCase(myTweet);
+
 		String genString = arrayToString(myTweet);
 		genString = checkChars(genString);			
 		genString = checkLength(genString);
-		genString = checkCase(genString);
 		
 		String status = "Psalms " + (int) random(150, 300) + ":" + (int) random(1, 45) + " ";
 		for (int i = 0; i < genString.length(); i++) {
@@ -147,7 +148,7 @@ public class TwitterBotMain extends PApplet {
 		}
 		
 		System.out.println("Status: " + status);		
-		tweet.updateTwitter(status);	// Post to Twitter
+		//tweet.updateTwitter(status);	// Post to Twitter
 		System.out.println("Posted!");
 	}
 	
@@ -156,15 +157,19 @@ public class TwitterBotMain extends PApplet {
 		  for(int i = 0; i < generated.size(); i++) {
 			  String currentToken = generated.get(i);
 			  if(currentToken.contains("@")) {
-				  generated.remove(currentToken);
+				  generated.remove(i);
 			  } else if(currentToken.contains("#")) {
-				  generated.remove(currentToken);
+				  generated.remove(i);
 			  } else if(currentToken.contains("…")) {
-				  generated.remove(currentToken);
+				  generated.remove(i);
 			  } else if(currentToken.contains("https")) {
-				  generated.remove(currentToken);
+				  generated.remove(i);
 			  } else if(currentToken.contains("rt")) {
-				  generated.remove(currentToken);
+				  generated.remove(i);
+			  } else if (currentToken.length() == 1) {
+				  if (currentToken != "a" || currentToken != "i") {
+					  generated.remove(i);
+				  }
 			  }
 		  }
 		  return generated;
@@ -221,19 +226,24 @@ public class TwitterBotMain extends PApplet {
 		return generated;
 	}
 	
-	// check capitalization of some words
-	String checkCase(String generated) {
-		if (generated.contains(" his ")) {
-			generated = generated.replace(" his ", " His ");
-		} else if (generated.contains(" him ")) {
-			generated = generated.replace(" his ", " Him ");
-		} else if (generated.contains(" god ")) {
-			generated = generated.replace(" god ", " God ");
-		} else if (generated.contains(" i ")) {
-			generated = generated.replace(" i ", " I ");
-		}
-		generated = generated.substring(0, 1).toUpperCase() + generated.substring(1);
-		return generated;
+	// remove any Twitter handles or email addresses
+	ArrayList<String> checkCase(ArrayList<String> generated) {
+		  for(int i = 0; i < generated.size(); i++) {
+			  String currentToken = generated.get(i);
+			  if(currentToken == "his") {
+				  currentToken = currentToken.substring(0, 1).toUpperCase() + currentToken.substring(1);
+			  } else if(currentToken == "him") {
+				  currentToken = currentToken.substring(0, 1).toUpperCase() + currentToken.substring(1);
+			  } else if(currentToken == "he") {
+				  currentToken = currentToken.substring(0, 1).toUpperCase() + currentToken.substring(1);
+			  } else if(currentToken == "god") {
+				  currentToken = currentToken.substring(0, 1).toUpperCase() + currentToken.substring(1);
+			  } else if(currentToken == "i") {
+				  currentToken = currentToken.substring(0, 1).toUpperCase() + currentToken.substring(1);
+			  }
+			  generated.set(i, currentToken);
+		  }
+		  return generated;
 	}
 	
 	// this starts & restarts the melody and runs unit tests
