@@ -30,7 +30,7 @@ public class TwitterBotMain extends PApplet {
 	private static int TWITTER_CHAR_LIMIT = 280; // originally 140, updated to new max
 	
 	//useful constant strings -- for instance if you want to make sure your tweet ends on a space or ending punctuation, etc.
-	private static final String fPUNCTUATION = "\",.!?;:()/\\";
+	private static final String fPUNCTUATION = "\",.!?;:()/\\|";
 	private static final String fENDPUNCTUATION = ".!?;,";
 	private static final String fREALENDPUNCTUATION = ".!?";
 
@@ -46,29 +46,23 @@ public class TwitterBotMain extends PApplet {
 	
 	int tweetSize = 40;
 	MarkovGenerator<String> markovTweetGenerator;
+	int mode = 0;
 	
 	UnitTests unitTest = new UnitTests(); // create unit tests
 	MelodyPlayer player; //play a midi sequence
 
 	public static void main(String[] args) {
-		// TODO Auto-generated method stub
-		PApplet.main("TwitterBotMain");  //Not really using processing functionality but ya know, you _could_. UI not required.
+		PApplet.main("TwitterBotMain");  
 	}
 
 	public void settings() {
 		size(350, 500); //dummy window
-	};
+	}
 
 	public void setup() {
 		tweet = new TwitterInteraction(); 
 						
 		loadNovel("data/psalms_excerpt.txt"); //TODO: must train from another source
-		// println("Token size: " + tokens.size());
-
-		//TODO: train an AI algorithm (eg, Markov Chain) and generate text for markov chain status
-		markovTweetGenerator = new MarkovGenerator();
-		
-		makeTweet(); // generate a tweet		
 		
 		player = new MelodyPlayer(this, 100.0f);
 		player.setup();
@@ -121,22 +115,30 @@ public class TwitterBotMain extends PApplet {
 	}
 	
 	void makeTweet() {
-		/*ArrayList<String> tweetResults = tweet.searchForTweets("Inspirational Quotes");
+		markovTweetGenerator = new MarkovGenerator();
 		
-		for (int i = 0; i < tweetResults.size(); i++) {
-			TextTokenizer tokenizer = new TextTokenizer(tweetResults.get(i));
-			ArrayList<String> t = tokenizer.parseSearchText();
-			tokens.addAll(t);
-		}*/
+		// if mode is 1, train also from Monday Motivation Tweets
+		if (mode == 1) {
+			ArrayList<String> tweetResults = tweet.searchForTweets("#MondayMotivation");
+			for (int i = 0; i < tweetResults.size(); i++) {
+				TextTokenizer tokenizer = new TextTokenizer(tweetResults.get(i));
+				ArrayList<String> t = tokenizer.parseSearchText();
+				tokens.addAll(t);
+			} 
+			//for (int i = 0; i < tweetResults.size(); i++) { // prints out the results of the search on twitter
+			//	println(tweetResults.get(i)); 
+			//}
+		}
 		
 		markovTweetGenerator.train(tokens);
 		
 		ArrayList<String> myTweet = markovTweetGenerator.generate((int) random(5, tweetSize));
 		
+		myTweet = removeExtras(myTweet);
+		myTweet = removeConsecutiveDups(myTweet);
 		String genString = arrayToString(myTweet);
 		genString = checkChars(genString);			
 		genString = checkLength(genString);
-		//genString = checkAn(genString);
 		genString = checkCase(genString);
 		
 		String status = "Psalms " + (int) random(150, 300) + ":" + (int) random(1, 45) + " ";
@@ -144,12 +146,44 @@ public class TwitterBotMain extends PApplet {
 			status = status + genString.charAt(i);
 		}
 		
-		System.out.println("status is: " + status);
-		
-		tweet.updateTwitter(status);	
+		System.out.println("Status: " + status);		
+		tweet.updateTwitter(status);	// Post to Twitter
+		System.out.println("Posted!");
 	}
 	
-	String arrayToString(ArrayList<String> generated) {
+	// remove any Twitter handles or email addresses
+	ArrayList<String> removeExtras(ArrayList<String> generated) {
+		  for(int i = 0; i < generated.size(); i++) {
+			  String currentToken = generated.get(i);
+			  if(currentToken.contains("@")) {
+				  generated.remove(currentToken);
+			  } else if(currentToken.contains("#")) {
+				  generated.remove(currentToken);
+			  } else if(currentToken.contains("…")) {
+				  generated.remove(currentToken);
+			  } else if(currentToken.contains("https")) {
+				  generated.remove(currentToken);
+			  } else if(currentToken.contains("rt")) {
+				  generated.remove(currentToken);
+			  }
+		  }
+		  return generated;
+	}
+	
+	// remove any words repeated consecutively
+	ArrayList<String> removeConsecutiveDups(ArrayList<String> generated) {  
+		  ArrayList<String> newList = new ArrayList<String>();
+		  newList.add(generated.get(0));
+		  for(int i = 1; i < generated.size(); i++) {
+			  if(generated.get(i - 1) != generated.get(i)) {
+				  newList.add(generated.get(i));
+		    }
+		  }
+		  return newList;
+	}
+	
+	// convert the generated ArrayList of strings into a single string
+	String arrayToString(ArrayList<String> generated) { 
 		String str = "";
 		for (int i = 0; i < generated.size(); i++) {
 			str = str + generated.get(i) + " ";
@@ -157,45 +191,25 @@ public class TwitterBotMain extends PApplet {
 		return str;
 	}
 	
-	String checkChars(String generated) {
+	// check some basic formatting (punctuation and extraneous spaces)
+	String checkChars(String generated) { 
 		String str = "";
 		for (int i = 0; i < generated.length(); i++) { // check for random punctuation
 			int isPunctuation = fPUNCTUATION.indexOf(generated.charAt(i));
 			if (isPunctuation == -1 && !Character.isDigit(generated.charAt(i))) {
 				str = str + generated.charAt(i);
 			}
-		}
-		str = str.replace("\t", "");
-		str = str.replace("\r", "");
-		str = str.replace("\n", "");
-		String after = str.trim().replaceAll(" +", " ");  // check for extra spaces	
-		after = after.toLowerCase(); // make string all lower case
-		return after;
-	}
-	
-	String checkAn(String generated) {
-		
-		for (int i = 0; i < generated.length(); i++) {
-			if (generated.contains(" a ")) {
-				int isA = " a ".indexOf(generated.charAt(i));
-				if (isA != -1) {
-					if (fVOWELS.indexOf(generated.charAt(i + 3)) != -1) {
-						generated = generated.replace(generated.substring(i - 1, i + 1), " an ");
-					}
-				}
-			} else if (generated.contains(" an ")) {
-				int isAn = " an ".indexOf(generated.charAt(i));
-				if (isAn != -1) {
-					if (fVOWELS.indexOf(generated.charAt(i + 4)) != -1) {
-						generated = generated.replace(generated.substring(i - 1, i + 2), " a ");
-					}
-				}
+			int isWhiteSpace = fWHITESPACE.indexOf(generated.charAt(i));
+			if (isWhiteSpace != -1) {
+				str = str + " ";
 			}
 		}
-		
-		return generated;
+		str = str.replaceAll("\\s+", " ");
+		str = str.toLowerCase(); // make string all lower case
+		return str;
 	}
 	
+	// make sure the tweet is not too long for twitter length restrictions
 	String checkLength(String generated) {
 		String trimmed = "";
 		if (generated.length() > TWITTER_CHAR_LIMIT) {
@@ -207,6 +221,7 @@ public class TwitterBotMain extends PApplet {
 		return generated;
 	}
 	
+	// check capitalization of some words
 	String checkCase(String generated) {
 		if (generated.contains(" his ")) {
 			generated = generated.replace(" his ", " His ");
@@ -217,11 +232,9 @@ public class TwitterBotMain extends PApplet {
 		} else if (generated.contains(" i ")) {
 			generated = generated.replace(" i ", " I ");
 		}
-
 		generated = generated.substring(0, 1).toUpperCase() + generated.substring(1);
 		return generated;
 	}
-	
 	
 	// this starts & restarts the melody and runs unit tests
 	public void keyPressed() {
@@ -237,59 +250,38 @@ public class TwitterBotMain extends PApplet {
 			unitTest.P2UnitTest2();
 		} else if (key == 'e') {
 			unitTest.P2UnitTest3();	
+		} else if (key == 'n') {
+			mode = 0;
+			makeTweet();
+		} else if (key == 'm') {
+			mode = 1;
+			makeTweet();
 		}
 	}
 	
-	// display instructions to the user
+	// display unit test instructions to the user
 	public void showInstructions() {
 		textAlign(CENTER);
-		textSize(25);
+		textSize(20);
 		fill(0, 100, 255);
-		text("Unit Tests\nfor Probability Generator\nand Markov Generator\nof Order 1", width/2, height*3/20);
+		text("Unit Tests for \nProbability and Markov (Order 1) \nGenerators", width/2, height*1/20);
+		text("User Interaction for\n@wondruful Twitter Bot", width/2, height*13/20);
 		textSize(16);
 		fill(0, 160, 255);
-		text("Press 1 for Project 1: Unit Test 1", width/2, height*12/20);
+		text("Press 1 for Project 1: Unit Test 1", width/2, height*5/20);
 		fill(0, 175, 255);
-		text("Press 2 for Project 1: Unit Test 2", width/2, height*13/20); 
+		text("Press 2 for Project 1: Unit Test 2", width/2, height*6/20); 
 		fill(0, 190, 255);
-		text("Press 3 for Project 1: Unit Test 3", width/2, height*14/20);
+		text("Press 3 for Project 1: Unit Test 3", width/2, height*7/20);
 		fill(0, 160, 255);
-		text("Press q for Project 2: Unit Test 1", width/2, height*16/20);
+		text("Press q for Project 2: Unit Test 1", width/2, height*8/20);
+	    fill(0, 175, 255);
+		text("Press w for Project 2: Unit Test 2", width/2, height*9/20);
+		fill(0, 190, 255);
+		text("Press e for Project 2: Unit Test 3", width/2, height*10/20);
 	    fill(0, 160, 255);
-		text("Press w for Project 2: Unit Test 2", width/2, height*17/20);
-		fill(0, 160, 255);
-		text("Press e for Project 2: Unit Test 3", width/2, height*18/20);
+		text("Press n for tweet from Psalms", width/2, height*16/20);
+		fill(0, 175, 255);
+		text("Press m for tweet from Psalms and\n#MotivationMonday", width/2, height*17/20);
 	}
-	
-	/* NOTE: everything starts uncommented. Comment out the calls that you would like to try and use.
-	
-	loadNovel("data/The Grand Sophy excerpt.txt"); //TODO: must train from another source
-	println("Token size: " + tokens.size());
-
-	TODO: train an AI algorithm (eg, Markov Chain) and generate text for markov chain status
-		
-	// can train on twitter statuses -- note: in your code I would put this part in a separate function
-	// but anyhow, here is an example of searrching twitter hashtag. You have to pay $$ to the man to get more results. :(
-	// see TwitterInteraction class
-		
-	ArrayList<String> tweetResults = tweet.searchForTweets("John Cage");
-	for (int i = 0; i < tweetResults.size(); i++) {
-		println(tweetResults.get(i)); //just prints out the results for now
-	}
-				
-	//prints the text content of the sites that come up with the google search of dogs
-	//you may use this content to train your AI too
-	
-	Scraper scraper = new Scraper(); 
-	ArrayList<String> results;
-	try {
-		results = scraper.scrapeGoogleResults("dogs");
-		// print your results
-		System.out.println(results); 
-		scraper.scrape("http://google.com",  "dogs"); //see class documentation
-	} catch (JauntException e) {
-		// TODO Auto-generated catch block
-		e.printStackTrace();
-	}
- */
 }
