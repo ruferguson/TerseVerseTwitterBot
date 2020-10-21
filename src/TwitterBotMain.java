@@ -148,7 +148,7 @@ public class TwitterBotMain extends PApplet {
 		}
 		
 		System.out.println("Status: " + status);		
-		//tweet.updateTwitter(status);	// Post to Twitter
+		tweet.updateTwitter(status);	// Post to Twitter
 		System.out.println("Posted!");
 	}
 	
